@@ -10,13 +10,7 @@
 
 #set directory name using timestamp
 
-#timestamp_for_bkp=$(date +"%Y-%m-%d_%I-%M_%p")
 timestamp_for_bkp=$(date +%Y-%m-%d__%H-%M)
-
-backup_root="./"
-
-# Set backup directory
-backup_dir="${backup_root}${timestamp_for_bkp}"
 
 # Get MySQL password from CyberPanel
 mysql_password=$(cat /etc/cyberpanel/mysqlPassword)
@@ -25,47 +19,39 @@ mysql_password=$(cat /etc/cyberpanel/mysqlPassword)
 databases=$(mysql -u root -p"$mysql_password" -e "SHOW DATABASES;" | grep -Ev "(Database|mysql|performance_schema|information_schema)")
 
 # Create backup directory
-if mkdir -p "$backup_dir"; then
-  echo "$(date) - Backup directory created: $backup_dir" >> "${backup_root}backup.log"
+if mkdir -p "$timestamp_for_bkp"; then
+  echo "$(date) - Backup directory created: $timestamp_for_bkp" >> backup.log
 else
-  echo "$(date) - Error creating backup directory: $backup_dir" >> "${backup_root}backup_error_log"
+  echo "$(date) - Error creating backup directory: $timestamp_for_bkp" >> backup_error_log
   exit 1
 fi
 
 # Backup each database separately
 for db in $databases; do
-  backup_file="$backup_dir/$db.sql.gz"
+  backup_file="$timestamp_for_bkp/$db.sql.gz"
   if /usr/bin/mysqldump -h localhost -u root -p"$mysql_password" "$db" | gzip -c > "$backup_file"; then
-    echo "$(date) - Database backup completed: $backup_file" >> "${backup_root}backup.log"
+    echo "$(date) - Database backup completed: $backup_file" >> backup.log
   else
-    echo "$(date) - Error backing up database: $db" >> "${backup_root}backup_error_log"
+    echo "$(date) - Error backing up database: $db" >> backup_error_log
     exit 1
   fi
 done
 
-# Change working directory to backup directory
-if cd "$backup_dir"; then
-  echo "$(date) - Changed working directory to: $backup_dir" >> "${backup_root}backup.log"
-else
-  echo "$(date) - Error changing working directory to: $backup_dir" >> "${backup_root}backup_error_log"
-  exit 1
-fi
-
 # Compress all backup files into a single archive
-if tar -czvf "../all_databases-${timestamp_for_bkp}.tar.gz" .; then
-  echo "$(date) - Backup files compressed into: all_databases-${timestamp_for_bkp}.tar.gz" >> "${backup_root}backup.log"
+if tar -czvf "all_databases-${timestamp_for_bkp}.tar.gz" "$timestamp_for_bkp"; then
+  echo "$(date) - Backup files compressed into: all_databases-${timestamp_for_bkp}.tar.gz" >> backup.log
 else
-  echo "$(date) - Error compressing backup files into: all_databases-${timestamp_for_bkp}.tar.gz" >> "${backup_root}backup_error_log"
+  echo "$(date) - Error compressing backup files into: all_databases-${timestamp_for_bkp}.tar.gz" >> backup_error_log
   exit 1
 fi
 
 # Remove individual backup files
-if rm -r "$backup_dir"; then
-  echo "$(date) - Individual backup files removed: $backup_dir" >> "${backup_root}backup.log"
+if rm -r "$timestamp_for_bkp"; then
+  echo "$(date) - Individual backup files removed: $timestamp_for_bkp" >> backup.log
 else
-  echo "$(date) - Error removing individual backup files: $backup_dir" >> "${backup_root}backup_error_log"
+  echo "$(date) - Error removing individual backup files: $timestamp_for_bkp" >> backup_error_log
   exit 1
 fi
 
 # Log time taken for backup process
-echo "$(date) - Backup process completed in $(printf '%02d:%02d' $((SECONDS/60)) $((SECONDS%60))) minutes:seconds to file all_databases-${timestamp_for_bkp}.tar.gz" >> "${backup_root}backup.log"
+echo "$(date) - Backup process completed in $(printf '%02d:%02d' $((SECONDS/60)) $((SECONDS%60))) minutes:seconds to file all_databases-${timestamp_for_bkp}.tar.gz" >> backup.log
