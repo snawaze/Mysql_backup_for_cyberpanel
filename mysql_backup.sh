@@ -53,5 +53,14 @@ else
   exit 1
 fi
 
+# Upload the backup file to Google Drive using the Drive API
+# Replace <path_to_credentials_file> with the path to your Google Drive API credentials file
+if python3 upload_to_drive.py "<path_to_credentials_file>" "all_databases-${timestamp_for_bkp}.tar.gz"; then
+  echo "$(date) - Backup file uploaded to Google Drive: all_databases-${timestamp_for_bkp}.tar.gz" >> backup.log
+else
+  echo "$(date) - Error uploading backup file to Google Drive: all_databases-${timestamp_for_bkp}.tar.gz" >> backup_error_log
+  exit 1
+fi
+
 # Log time taken for backup process
 echo "$(date) - Backup process completed in $(printf '%02d:%02d' $((SECONDS/60)) $((SECONDS%60))) minutes:seconds to file all_databases-${timestamp_for_bkp}.tar.gz" >> backup.log
