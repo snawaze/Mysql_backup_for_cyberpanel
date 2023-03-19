@@ -1,67 +1,30 @@
-<!DOCTYPE html>
-<html>
+<?php
+// Set backup directory
+$backup_dir = '/home/backup/';
 
-<head>
-    <title>MySQL Backup Files</title>
-    <style type="text/css">
-        table {
-            border-collapse: collapse;
-            width: 100%;
-        }
+// Get filename from query string
+$filename = basename($_GET['file']);
 
-        th,
-        td {
-            text-align: left;
-            padding: 8px;
-            border-bottom: 1px solid #ddd;
-        }
+// Set file path
+$file = $backup_dir . $filename;
 
-        th {
-            background-color: #4CAF50;
-            color: white;
-        }
+// Check if file exists and is a backup file
+if (file_exists($file) && pathinfo($file, PATHINFO_EXTENSION) === 'gz') {
+    // Set headers for file download
+    header('Content-Description: File Transfer');
+    header('Content-Type: application/octet-stream');
+    header('Content-Disposition: attachment; filename="' . basename($file) . '"');
+    header('Expires: 0');
+    header('Cache-Control: must-revalidate');
+    header('Pragma: public');
+    header('Content-Length: ' . filesize($file));
 
-        tr:hover {
-            background-color: #f5f5f5;
-        }
-
-        a {
-            text-decoration: none;
-            color: blue;
-        }
-    </style>
-</head>
-
-<body>
-
-    <h1>MySQL Backup Files</h1>
-
-    <?php
-    // Include mysql_backup.sh script
-    include('mysql_backup.sh');
-
-    // Set backup directory
-    $backup_dir = '/home/backup/';
-
-    // Get list of backup files in the backup directory
-    $backup_files = array_diff(scandir($backup_dir), array('..', '.'));
-
-    // Display table of backup files with download links
-    if (count($backup_files) > 0) {
-        echo "<table>\n";
-        echo "<tr><th>Backup File</th><th>Date</th><th>Download</th></tr>\n";
-        foreach ($backup_files as $backup_file) {
-            if (pathinfo($backup_file, PATHINFO_EXTENSION) === 'gz') {
-                $backup_date = date('F j, Y H:i:s', filemtime($backup_dir . $backup_file));
-                echo "<tr><td>$backup_file</td><td>$backup_date</td><td><a href=\"download.php?file=$backup_file\">Download</a></td></tr>\n";
-            }
-        }
-        echo "</table>\n";
-    } else {
-        echo "<p>No backup files found.</p>\n";
-    }
-    ?>
-
-</body>
-
-</html>
+    // Send file to user
+    readfile($file);
+    exit;
+} else {
+    // Redirect user back to backup files page
+    header('Location: backup_files.php');
+    exit;
+}
+?>
