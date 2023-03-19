@@ -13,7 +13,7 @@ backup_dir="/home/backup"
 
 # Set MySQL credentials
 mysql_user="root"
-mysql_password="puZl21RHlvCAMYu"
+mysql_password=""
 
 # Get list of databases
 databases=$(mysql -u "$mysql_user" -p"$mysql_password" -e "SHOW DATABASES;" | grep -Ev "(Database|information_schema|performance_schema)")
