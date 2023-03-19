@@ -16,7 +16,7 @@ timestamp_for_bkp=$(date +%Y-%m-%d__%H-%M)
 backup_root="./"
 
 # Set backup directory
-backup_dir="${backup_root}/${timestamp_for_bkp}"
+backup_dir="${backup_root}${timestamp_for_bkp}"
 
 # Get MySQL password from CyberPanel
 mysql_password=$(cat /etc/cyberpanel/mysqlPassword)
