@@ -46,22 +46,16 @@ else
   exit 1
 fi
 
-# Remove individual backup files
-if rm -r "$timestamp_for_bkp"; then
-  echo "$(date) - Individual backup files removed: $timestamp_for_bkp" >> backup.log
-else
-  echo "$(date) - Error removing individual backup files: $timestamp_for_bkp" >> backup_error_log
-  exit 1
-fi
+
 
 
 # Upload the backup file to Mega.nz
-# /usr/local/megatools/megatools put  -p '' -u '' /home/backup/mysql_backup.sh
-if /usr/local/megatools put all_databases-${timestamp_for_bkp}.tar.gz; then
+# /usr/local/megatools/megatools put  /home/backup/mysql_backup.sh
+if /home/backup/megatools/megatools put  all_databases-${timestamp_for_bkp}.tar.gz  --path /Trash; then
   echo "$(date) - Backup file uploaded to Mega.nz: all_databases-${timestamp_for_bkp}.tar.gz" >> backup.log
 else
   echo "$(date) - Error uploading backup file to Mega.nz: all_databases-${timestamp_for_bkp}.tar.gz" >> backup_error_log
-  exit 1
+  #exit 1
 fi
 
 # # Upload the backup file to Google Drive using the Drive API
@@ -73,5 +67,12 @@ fi
 #   exit 1
 # fi
 
+# Remove individual backup files
+if rm -r "$timestamp_for_bkp"; then
+  echo "$(date) - Individual backup files removed: $timestamp_for_bkp" >> backup.log
+else
+  echo "$(date) - Error removing individual backup files: $timestamp_for_bkp" >> backup_error_log
+  exit 1
+fi
 # Log time taken for backup process
 echo "$(date) - Backup process completed in $(printf '%02d:%02d' $((SECONDS/60)) $((SECONDS%60))) minutes:seconds to file all_databases-${timestamp_for_bkp}.tar.gz" >> backup.log

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html>
 
 <head>
@@ -56,6 +56,36 @@
     <progress id="progress_bar" max="100"></progress>
     <div id="error_message"></div>
     <div id="backup_files_table"></div>
+</body>
+
+</html> -->
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>MySQL Backup</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('#backup-button').click(function () {
+                $('#output').html('Backup started...<br>');
+                $.ajax({
+                    type: 'POST',
+                    url: 'mysql_backup.php',
+                    success: function (response) {
+                        $('#output').append(response);
+                    }
+                });
+            });
+        });
+    </script>
+</head>
+
+<body>
+    <h1>MySQL Backup</h1>
+    <button id="backup-button">Start Backup</button>
+    <div id="output"></div>
 </body>
 
 </html>
