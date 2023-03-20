@@ -1,79 +1,64 @@
+#!/usr/bin/env python3
+
 import os
-import pickle
-from google.auth.transport.requests import Request
+import sys
+from datetime import datetime, timedelta
 from google.oauth2.credentials import Credentials
-from googleapiclient.errors import HttpError
 from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload
 
+# Set the ID of the folder where the backup file will be uploaded
+FOLDER_ID = 'your_folder_id_here'
 
-def get_credentials():
-    """
-    Gets valid user credentials from storage.
+# Set the expiration time for the file (2 months from now)
+expiration_time = (datetime.utcnow() + timedelta(days=60)).isoformat() + 'Z'
 
-    If nothing has been stored, or if the stored credentials are invalid,
-    the OAuth2 flow is completed to obtain the new credentials.
+def upload_file_to_drive(credentials_path, file_path):
+    # Load credentials from the specified file
+    creds = Credentials.from_authorized_user_file(credentials_path)
 
-    Returns:
-        Credentials, the obtained credential.
-    """
+    # Create Drive API client
+    service = build('drive', 'v3', credentials=creds)
 
-    # The file token.pickle stores the user's access and refresh tokens, and is
-    # created automatically when the authorization flow completes for the first time.
-    if os.path.exists('token.pickle'):
-        with open('token.pickle', 'rb') as token:
-            creds = pickle.load(token)
-    # If there are no (valid) credentials available, let the user log in.
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file(
-                'credentials.json', SCOPES)
-            creds = flow.run_local_server(port=0)
-        # Save the credentials for the next run
-        with open('token.pickle', 'wb') as token:
-            pickle.dump(creds, token)
+    # Create file metadata
+    file_metadata = {'name': os.path.basename(file_path),
+                     'parents': [FOLDER_ID],
+                     'expirationTime': expiration_time}
 
-    return creds
-
-
-def upload_to_drive(file_path, file_name):
-    """
-    Uploads a file to Google Drive using the Google Drive API.
-
-    Args:
-        file_path (str): Path to the file to upload.
-        file_name (str): Name to give to the file in Google Drive.
-    """
-
-    # Set up the Drive API client
-    service = build('drive', 'v3', credentials=get_credentials())
+    # Create media object for file upload
+    file_media = MediaFileUpload(file_path, resumable=True)
 
     try:
-        # Create a MediaFileUpload object for the file
-        file_metadata = {'name': file_name}
-        media = MediaFileUpload(file_path,
-                                mimetype='application/octet-stream')
+        # Upload the file to Google Drive
+        file = service.files().create(body=file_metadata,
+                                       media_body=file_media,
+                                       fields='id').execute()
 
-        # Upload the file to the user's Google Drive
-        file = service.files().create(body=file_metadata, media_body=media,
-                                      fields='id').execute()
-        print('File ID: %s' % file.get('id'))
+        print(f'File ID: {file.get("id")}')
     except HttpError as error:
-        print('An error occurred: %s' % error)
+        print(f'An error occurred: {error}')
         file = None
 
     return file
 
-
 if __name__ == '__main__':
-    file_path = '/path/to/all_databases-2023-03-26__01-00.tar.gz'
-    file_name = 'all_databases-2023-03-26__01-00.tar.gz'
-    upload_to_drive(file_path, file_name)
+    if len(sys.argv) != 3:
+        print(f'Usage: {sys.argv[0]} <path_to_credentials_file> <file_path>')
+        sys.exit(1)
+
+    credentials_path = sys.argv[1]
+    file_path = sys.argv[2]
+
+    upload_file_to_drive(credentials_path, file_path)
+
 
 
 # You'll need to modify the file_path and file_name variables at the bottom of the script to match the file you want to upload.
 #  You'll also need to download a credentials.json file from the Google API Console for your project,
 #   and put it in the same directory as the script. Finally, you'll need to run pip install google-auth
 #    google-auth-oauthlib google-auth-httplib2 google-api-python-client to install the required dependencies.
+
+# Note that the expiration time is specified in ISO 8601 format with a UTC timezone offset ('Z'),
+#  and is calculated as 2 months from the current time using the timedelta function from the datetime module.
+#   You can adjust the expiration time by changing the days argument of the timedelta function.
