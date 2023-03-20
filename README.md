@@ -10,7 +10,9 @@ Mysql backup script for use in cyberpanel with gzip compression
 
 # Author: Hirantha Bandara Muramudali
 
-# Date: March 25, 2023
+# Date: March 19, 2023
+
+# Updated on March 20,2023
 
 # Usage: ./mysql_backup.sh
 
