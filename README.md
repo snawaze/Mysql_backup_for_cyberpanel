@@ -1,7 +1,7 @@
 # Mysql_backup
 
 Mysql backup script for use in cyberpanel with gzip compression
-
+After that It uploads to mega.nz. I've used the recycle bin in mega.nz as It will automatically delete the files after some time.
 ###########################################################
 
 # Script: mysql_backup.sh
