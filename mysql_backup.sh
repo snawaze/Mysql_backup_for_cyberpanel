@@ -11,7 +11,7 @@
 
 # Set directory name using timestamp
 ip_address=$(curl -s ifconfig.me)
-current_date=$(date +"%Y%m%d%h%i")
+current_date=$(date +"%Y%m%d%H%M")
 timestamp_for_bkp="${ip_address}-${current_date}"
 backup_dir="/home/backup/"
 
