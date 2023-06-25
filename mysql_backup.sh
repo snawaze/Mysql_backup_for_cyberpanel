@@ -5,7 +5,7 @@
 # Description: Backup all MySQL databases to a single compressed file
 # Author: Hirantha Bandara Muramudali
 # Date: March 9, 2023
-# Updated: March 20, 2023
+# Updated: June 25, 2023
 # Usage: ./mysql_backup.sh
 ###########################################################
 
@@ -43,20 +43,16 @@ done
 # Compress all backup files into a single archive
 if tar -czvf "${backup_dir}all_databases-${timestamp_for_bkp}.tar.gz" "${backup_dir}${timestamp_for_bkp}"; then
   echo "$(date) - Backup files compressed into: ${backup_dir}all_databases-${timestamp_for_bkp}.tar.gz" >> "${backup_dir}backup.log"
-else
-  echo "$(date) - Error compressing backup files into: ${backup_dir}all_databases-${timestamp_for_bkp}.tar.gz" >> "${backup_dir}backup_error_log"
-  exit 1
-fi
 
 # Remove individual backup files
-if rm -r "${backup_dir}$timestamp_for_bkp"; then
-  echo "$(date) - Individual backup files removed: $timestamp_for_bkp" >> backup.log
-else
-  echo "$(date) - Error removing individual backup files: $timestamp_for_bkp" >> backup_error_log
-  exit 1
-fi
+  if rm -r "${backup_dir}${timestamp_for_bkp}"; then
+    echo "$(date) - Individual backup files removed: ${backup_dir}${timestamp_for_bkp}" >> "${backup_dir}backup.log"
+  else
+    echo "$(date) - Error removing individual backup files: ${backup_dir}${timestamp_for_bkp}" >> "${backup_dir}backup_error_log"
+    exit 1
+  fi
 
-# Upload the backup file to Mega.nz  Putting in the Trash folder as the file needs to be deleted after 30 days in order to prevent over-usage
+  # Upload the backup file to Mega.nz  Putting in the Trash folder as the file needs to be deleted after 30 days in order to prevent over-usage
   if "${backup_dir}"megatools/megatools put "${backup_dir}all_databases-${timestamp_for_bkp}.tar.gz" --path /Trash  --config "${backup_dir}"megatools/.megarc; then
     echo "$(date) - Backup file uploaded to Mega.nz: ${backup_dir}all_databases-${timestamp_for_bkp}.tar.gz" >> "${backup_dir}backup.log"
 
@@ -75,13 +71,6 @@ else
   echo "$(date) - Error compressing backup files into: ${backup_dir}all_databases-${timestamp_for_bkp}.tar.gz" >> "${backup_dir}backup_error_log"
   exit 1
 fi
-
-# # Upload the backup file to Google Drive using the Drive API
-# # Replace <path_to_credentials_file> with the path to your Google Drive API credentials file
-# if python3 upload_to_drive.py "<path_to_credentials_file>" "${backup_dir}all_databases-${timestamp_for_bkp}.tar.gz"; then
-#   echo "$(date) - Backup file uploaded to Google Drive: ${backup_dir}all_databases-${timestamp_for_bkp}.tar.gz" >> ${backup_dir}backup.log
-# else
-#   echo "$(date) - Error uploading backup file to Google Drive: ${backup_dir}all_databases-${timestamp_for
 
 # Log time taken for backup process
 echo "$(date) - Backup process completed in $(printf '%02d:%02d' $((SECONDS/60)) $((SECONDS%60))) minutes:seconds to file all_databases-${timestamp_for_bkp}.tar.gz" >> "${backup_dir}backup.log"
