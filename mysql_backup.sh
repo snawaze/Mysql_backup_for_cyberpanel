@@ -56,12 +56,24 @@ else
   exit 1
 fi
 
-# Upload the backup file to Mega.nz  Putting in the Trash folder as the file needs to be deleted after 30days inorder to prevent over usage
-if "${backup_dir}"megatools/megatools put "${backup_dir}all_databases-${timestamp_for_bkp}.tar.gz" --path /Trash  --config "${backup_dir}"/megatools/.megarc; then
-  echo "$(date) - Backup file uploaded to Mega.nz: ${backup_dir}all_databases-${timestamp_for_bkp}.tar.gz" >> "${backup_dir}backup.log"
+# Upload the backup file to Mega.nz  Putting in the Trash folder as the file needs to be deleted after 30 days in order to prevent over-usage
+  if "${backup_dir}"megatools/megatools put "${backup_dir}all_databases-${timestamp_for_bkp}.tar.gz" --path /Trash  --config "${backup_dir}"megatools/.megarc; then
+    echo "$(date) - Backup file uploaded to Mega.nz: ${backup_dir}all_databases-${timestamp_for_bkp}.tar.gz" >> "${backup_dir}backup.log"
+
+    # Remove the compressed backup file
+    if rm "${backup_dir}all_databases-${timestamp_for_bkp}.tar.gz"; then
+      echo "$(date) - Compressed backup file removed: all_databases-${timestamp_for_bkp}.tar.gz" >> "${backup_dir}backup.log"
+    else
+      echo "$(date) - Error removing compressed backup file: all_databases-${timestamp_for_bkp}.tar.gz" >> "${backup_dir}backup_error_log"
+      exit 1
+    fi
+  else
+    echo "$(date) - Error uploading backup file to Mega.nz: ${backup_dir}all_databases-${timestamp_for_bkp}.tar.gz" >> "${backup_dir}backup_error_log"
+    exit 1
+  fi
 else
-  echo "$(date) - Error uploading backup file to Mega.nz: ${backup_dir}all_databases-${timestamp_for_bkp}.tar.gz" >> "${backup_dir}backup_error_log"
-  #exit 1
+  echo "$(date) - Error compressing backup files into: ${backup_dir}all_databases-${timestamp_for_bkp}.tar.gz" >> "${backup_dir}backup_error_log"
+  exit 1
 fi
 
 # # Upload the backup file to Google Drive using the Drive API
