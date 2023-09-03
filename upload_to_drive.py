@@ -7,6 +7,8 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
 
 # Set the ID of the folder where the backup file will be uploaded
 FOLDER_ID = 'your_folder_id_here'
@@ -14,9 +16,24 @@ FOLDER_ID = 'your_folder_id_here'
 # Set the expiration time for the file (2 months from now)
 expiration_time = (datetime.utcnow() + timedelta(days=60)).isoformat() + 'Z'
 
+def authenticate_with_google():
+    creds = None
+    if os.path.exists('token.json'):
+        creds = Credentials.from_authorized_user_file('token.json')
+
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file('client_secret.json', ['https://www.googleapis.com/auth/drive.file'])
+            creds = flow.run_local_server(port=0)
+            with open('token.json', 'w') as token:
+                token.write(creds.to_json())
+    return creds
+
 def upload_file_to_drive(credentials_path, file_path):
     # Load credentials from the specified file
-    creds = Credentials.from_authorized_user_file(credentials_path)
+    creds = authenticate_with_google()
 
     # Create Drive API client
     service = build('drive', 'v3', credentials=creds)
@@ -51,8 +68,6 @@ if __name__ == '__main__':
     file_path = sys.argv[2]
 
     upload_file_to_drive(credentials_path, file_path)
-
-
 
 # You'll need to modify the file_path and file_name variables at the bottom of the script to match the file you want to upload.
 #  You'll also need to download a credentials.json file from the Google API Console for your project,
